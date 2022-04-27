@@ -1,2 +1,14 @@
+!/nrf52840_develop.si4project/nrf52840_develop.si4project_filelist.txt
 /nrf52840_develop.si4project
-/Keil5
+Keil5/
+
+!/config/nrf52840/config/sdk_config.h
+config/
+components/
+documentation/
+examples/
+external/
+external_tools/
+integration/
+license.txt
+modules/
