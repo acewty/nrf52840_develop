@@ -21,6 +21,9 @@
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 #include "qcit_gpio_drv.h"
 #include "qcit_hardware_init.h"
 #include "qcit_types.h"
@@ -32,6 +35,13 @@
 #include "qcit_exit_drv.h"
 #include "qcit_pwm_drv.h"
    
+void vApplicationIdleHook()
+{
+}
+
+#if NRF_LOG_ENABLED
+static TaskHandle_t m_logger_thread;                                /**< Definition of Logger thread. */
+#endif
 
 uint32 g_u32_cnt = 0;
 /**************************************************************************
@@ -49,20 +59,23 @@ int  main(void)
 	log_init();
 	hardware_init();
 	ble_stack_init();
-	//ble_scan_init_and_start();
 	
-	//NRF_LOG_INFO("example started.");
-	//NRF_LOG_FLUSH();
+	#if NRF_LOG_ENABLED
+    // Start execution.
+    if (pdPASS != xTaskCreate(logger_thread, "LOGGER", 256, NULL, 1, &m_logger_thread))
+    {
+        APP_ERROR_HANDLER(NRF_ERROR_NO_MEM);
+    }
+#endif
+	//nrf_sdh_freertos_init(advertising_start, NULL);
+	NRF_LOG_INFO("FreeRTOS example started.");
 
+	//激活深度睡眠模式
+    SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+
+	vTaskStartScheduler();
 	while(true)
-	{
-		led_open(LED_NRF52840_BRACELET);
-		nrf_delay_ms(500);
-		led_close(LED_NRF52840_BRACELET);
-		nrf_delay_ms(500);
-		//g_u32_main_cnt++;	//主循环测试计数值
-		//led_rgb_light_water();
-
-		//idle_state_handle();
-	}
+    {
+        APP_ERROR_HANDLER(NRF_ERROR_FORBIDDEN);
+    }
 }

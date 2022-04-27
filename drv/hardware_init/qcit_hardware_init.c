@@ -64,7 +64,7 @@ void hardware_init(void)
 	//timer_dw1000_start();
 
 	led_init(LED_NRF52840_BRACELET);
-	
+	led_open(LED_NRF52840_BRACELET);
 	//exit_charger_detect_pin_init();           //充电器检测引脚中断初始化
 
 

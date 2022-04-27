@@ -77,7 +77,7 @@ NRF_BLE_SCAN_DEF(m_scan);                                       				/**< Scannin
 void ble_stack_init(void)
 {
     uint32 u32_err_code = 0;
-		uint32_t u32_ram_start = 0;
+	uint32_t u32_ram_start = 0;
 	
     u32_err_code = nrf_sdh_enable_request();
     APP_ERROR_CHECK(u32_err_code);
