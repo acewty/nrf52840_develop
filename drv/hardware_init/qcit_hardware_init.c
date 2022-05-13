@@ -54,8 +54,8 @@ static void power_management_init(void);
  **************************************************************************/
 void hardware_init(void)
 {	
-	power_management_init();
-	clock_source_xtal();          //高频时钟源切换为外部晶振
+	//power_management_init();
+	//clock_source_xtal();          //高频时钟源切换为外部晶振
 	//timer_ms_init();
 	//app_timers_init();
 	//app_timer_seconds_cnt_start();
@@ -67,7 +67,7 @@ void hardware_init(void)
 	led_open(LED_NRF52840_BRACELET);
 	//exit_charger_detect_pin_init();           //充电器检测引脚中断初始化
 
-
+	
 }
 
 /**************************************************************************

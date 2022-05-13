@@ -34,14 +34,10 @@
 #include "qcit_timer_drv.h"
 #include "qcit_exit_drv.h"
 #include "qcit_pwm_drv.h"
-   
-void vApplicationIdleHook()
-{
-}
+#include "qcit_debug.h"
 
-#if NRF_LOG_ENABLED
-static TaskHandle_t m_logger_thread;                                /**< Definition of Logger thread. */
-#endif
+extern TaskHandle_t logger_task_handle;
+
 
 uint32 g_u32_cnt = 0;
 /**************************************************************************
@@ -57,22 +53,24 @@ uint32 g_u32_cnt = 0;
 int  main(void)
 {
 	log_init();
-	hardware_init();
-	ble_stack_init();
+	clock_init();
 	
-	#if NRF_LOG_ENABLED
+#if NRF_LOG_ENABLED
     // Start execution.
-    if (pdPASS != xTaskCreate(logger_thread, "LOGGER", 256, NULL, 1, &m_logger_thread))
+    if (pdPASS != xTaskCreate(logger_task, "LOGGER", 256, NULL, 1, &logger_task_handle))
     {
         APP_ERROR_HANDLER(NRF_ERROR_NO_MEM);
     }
 #endif
+	//激活深度睡眠模式
+	SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+
+	ble_stack_init();
+	hardware_init();
+	os_timers_init();
+	os_app_led_timer_start();
 	//nrf_sdh_freertos_init(advertising_start, NULL);
 	NRF_LOG_INFO("FreeRTOS example started.");
-
-	//激活深度睡眠模式
-    SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
-
 	vTaskStartScheduler();
 	while(true)
     {

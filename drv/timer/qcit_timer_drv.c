@@ -1,4 +1,9 @@
 #include <stdint.h>
+
+#include "FReeRTOS.h"
+#include "timers.h"
+#include "projdefs.h"
+
 #include "app_timer.h"
 #include "nrf.h"
 #include "nrf_ble_scan.h"
@@ -19,7 +24,7 @@
 
 
 #define TIMER_SYS_TICK_OVERFLOW_THRESHOLD    (unsigned long)0xF0FFFFFF
-
+#define LED_BLINK_INTERVAL    1000 //pdMS_TO_TICKS(1000)
 
 bool g_b_app_timer_senconds_cnt_is_running = QCIT_FALSE;       //app_timer_senconds_cnt运行标志
 uint8 g_u8_dw1000_timer_timeout_seconds = 1;                   //dw1000的定时超时秒数。默认1s，其他有2s、3s、5s、10s
@@ -33,6 +38,7 @@ const nrf_drv_timer_t TIMER_MS = NRF_DRV_TIMER_INSTANCE(3);
 extern float g_f_voltage_val;
 extern uint8 g_u8_anchor_id[4];
 
+static TimerHandle_t os_app_led_timer;    //led使用定时器    
 
 APP_TIMER_DEF(app_timer_senconds_cnt);            //用于秒计数的软件定时器
 //APP_TIMER_DEF(app_timer_ms_cnt);                  //用于毫秒计数的软件定时器
@@ -56,6 +62,22 @@ static void app_timer_seconds_cnt_timeout_handler(void * p_context)
 	{
 		g_u32_seconds_cnt = 0;
 	}
+}
+
+/**************************************************************************
+ *函数名称：os_app_led_timer_timeout_handler
+ *函数功能：led使用定时器处理函数，周期 LED_BLINK_INTERVAL
+ *输入参数：无
+ *返 回 值：无
+ *作	    者：吴庭永
+ *创建日期：2022年5月13日16:06:50
+ *修改历史：Ver1.0，无
+ *
+ **************************************************************************/ 
+static void os_app_led_timer_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+	nrf_gpio_pin_toggle(LED_NRF52840_BRACELET);
 }
 
 
@@ -150,6 +172,70 @@ void clock_source_xtal(void)
 	}
 }
 
+/**************************************************************************
+ *函数名称：clock_init
+ *函数功能：初始化时钟模块
+ *输入参数：无
+ *返 回 值：无
+ *作	    者：吴庭永
+ *创建日期：2022年5月13日10:57:09
+ *修改历史：Ver1.0，无
+ *
+ **************************************************************************/ 
+void clock_init(void)
+{	
+	uint32 u32_err_code;
+	u32_err_code = nrf_drv_clock_init();
+	APP_ERROR_CHECK(u32_err_code);
+}
+
+/**************************************************************************
+ *函数名称：os_timers_init
+ *函数功能：创建程序使用的相应系统软件定时器
+ *输入参数：无
+ *返 回 值：无
+ *作	    者：吴庭永
+ *创建日期：2022年5月13日10:57:09
+ *修改历史：Ver1.0，无
+ *
+ **************************************************************************/ 
+void os_timers_init(void)
+{
+    // Initialize timer module.
+    ret_code_t err_code = app_timer_init();
+    APP_ERROR_CHECK(err_code);
+
+    // 创建定时器，优先级由 app_timer_init()中的相应参数定义
+    os_app_led_timer = xTimerCreate("LED",
+                                   LED_BLINK_INTERVAL,
+                                   pdTRUE,
+                                   NULL,
+                                   os_app_led_timer_timeout_handler);
+
+    /* Error checking */
+    if (NULL == os_app_led_timer)
+    {
+        APP_ERROR_HANDLER(NRF_ERROR_NO_MEM);
+    }
+}
+
+/**************************************************************************
+ *函数名称：os_app_led_timer_start
+ *函数功能：启动led系统软件定时器
+ *输入参数：无
+ *返 回 值：无
+ *作	    者：吴庭永
+ *创建日期：2022年5月13日17:44:24
+ *修改历史：Ver1.0，无
+ *
+ **************************************************************************/ 
+void os_app_led_timer_start(void)
+{
+    if (pdPASS != xTimerStart(os_app_led_timer, OSTIMER_WAIT_FOR_QUEUE))
+    {
+        APP_ERROR_HANDLER(NRF_ERROR_NO_MEM);
+    }
+}
 
 
 /**************************************************************************
